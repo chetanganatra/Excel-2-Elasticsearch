@@ -14,18 +14,18 @@ Small & quick perl script to inject records from MS Excel (.xlsx) directly into 
 
 	Elasticsearch
 
-	   -i | --index <index name>   		Index name (default: xl2es)
-	   -t | --type <data type>     		Type name (default: xldata)
-	   -s | --es_server_port <host|IP:Port> (default: localhost:9200)
+	   -i | --index <index name>   			Index name (default: xl2es)
+	   -t | --type <data type>     			Type name (default: xldata)
+	   -s | --es_server_port <host|IP:Port> ES Host:Port (default: localhost:9200)
 
-	Excel File (Ref. README for fields header requirements)
+	Excel File  
 
-	   -x | --xl_filename           	Excel file name (required)							
+	   -x | --xl_filename           		Excel file name (required)							
 
 	Help
 
-	   -h | --help           		This help message
-	   -v | --verbose          		Verbose while parsing (defaut: off)
+	   -h | --help           				This help message
+	   -v | --verbose          				Verbose while parsing (defaut: off)
  
 
 
@@ -34,9 +34,9 @@ Small & quick perl script to inject records from MS Excel (.xlsx) directly into 
 
 * Ensure the first row in the Excel file has field names and first worksheet is the data worksheet
 * Append each field name with an underscore "_" followed by one character each for Index Analysis and Data type. For e.g. a string field with name Author could be named as Author_NS. i.e. Field is a String and Not_Analyzed index.
+* If not provided, default field mapping is Not_Analyzed and String (_NS)
 * Index analysis character could be **N** => Not Analyzed and **A** => Analyzed
 * Data type character could be **I** => Integer, **D** => Date, **S** => String, **B** => Double 
-* If not provided, default field mapping is Not_Analyzed and String (_NS)
 * For Date fields choose custom cell format "dd-mmm-yyyy hh:mm:ss". In case you wish to use a different Date format in Excel, appropriate changes needs to be done in the perl code.
 
 **License**
