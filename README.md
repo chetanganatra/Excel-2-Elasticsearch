@@ -4,25 +4,28 @@ Excel-2-Elasticsearch
 Small & Quick script to inject records from MS Excel (.xlsx) directly into Elasticsearch. Some inbuilt automation is done to map field types and index action using field names. For e.g. Field with name like **Author_NS** implies ~ Field name => **Author**, **N** => Index not_analyzed and **S** => String data type.
 
 ***WARNING:***
-To get the best results please follow instructions as mentioned in **formatting Excel Data**. 
+
+	To get the best results please follow instructions as mentioned in **formatting Excel Data**. 
 
 
-Usage: xl2es.pl [Options] -x <ExcelFilename.xlsx>
+Usage: 
 
-**Elasticsearch**
+	$ xl2es.pl [Options] -x <ExcelFilename.xlsx>
 
-   -i | --index <index name>   		Index name (default: xl2es)
-   -t | --type <data type>     		Type name (default: xldata)
-   -s | --es_server_port <host|IP:Port> (default: localhost:9200)
+	**Elasticsearch**
 
-**Excel File** (Ref. README for fields header requirements)
+	   -i | --index <index name>   		Index name (default: xl2es)
+	   -t | --type <data type>     		Type name (default: xldata)
+	   -s | --es_server_port <host|IP:Port> (default: localhost:9200)
 
-   -x | --xl_filename           	Excel file name (required)							
+	**Excel File** (Ref. README for fields header requirements)
 
-**Help**
+	   -x | --xl_filename           	Excel file name (required)							
 
-   -h | --help           		This help message
-   -v | --verbose          		Verbose while parsing (defaut: off)
+	**Help**
+
+	   -h | --help           		This help message
+	   -v | --verbose          		Verbose while parsing (defaut: off)
  
 
 
