@@ -1,7 +1,12 @@
 Excel-2-Elasticsearch
 ====
 
-Small & quick perl script to inject records from MS Excel (.xlsx) directly into Elasticsearch. Some inbuilt automation is done to directly map field types and index action using field names. For e.g. Field with name like **Author_NS** implies ~ Field name => **Author**, **N** => Not_analyzed index and **S** => String data type.
+Small and quick perl script to inject records from MS Excel (.xlsx) directly into Elasticsearch. Some inbuilt automation is done to directly map field types and index action using field names. For e.g. Field with name like **Author_NS** implies ~ Field name => **Author**, **N** => Not_analyzed index and **S** => String data type.
+
+Useful for doing quick demos by importing existing Excel data and charting graphs using Kibana. 
+
+Next Steps [TODO]: On similar lines generate Kibana dashboards using Field name automation!
+
 
 ***WARNING:***
 
