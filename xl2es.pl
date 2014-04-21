@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# xl2es.pl - Version 1.0
+# xl2es.pl - Version 1.1
 # Small&Quick script to inject records from MS Excel into Elasticsearch
 # Copyright (C) 2014 Chetan Ganatra - Chetan.Ganatra~at~gmail.com
 #
@@ -15,7 +15,7 @@
 #
 
 use strict;
-use v5.10; 																			 
+# use v5.10; 																			 
 no warnings 'experimental::smartmatch';												# use Spreadsheet::ParseExcel;
 use Time::Piece;
 use Getopt::Long;
@@ -23,9 +23,10 @@ use Scalar::Util qw(looks_like_number);
 use feature qw{ switch };
 
 use Spreadsheet::ParseXLSX;
+use Spreadsheet::ParseExcel;
 use Elasticsearch;																	# ElasticSearch vs Elasticsearch matters! 
 	
-my $xl2es_version = "1.0";
+my $xl2es_version = "1.1";
 	
 my $id=1;
 my $result="";
@@ -36,6 +37,8 @@ my $es_server_port = "localhost:9200";
 my $xl_filename = "";
 my $verbose = 0;
 
+my $parse_all_worksheets = 0;
+
 GetOptions(
 		'i|index=s' => \$index,
 		't|type=s' => \$type,
@@ -43,6 +46,7 @@ GetOptions(
 		'x|xl_filename=s' => \$xl_filename,
 		'v|verbose' => \$verbose,
 		'h|help'  => sub { usage() },
+		'a|all_worksheets' => \$parse_all_worksheets,
 	);
 
 sub usage {
@@ -64,7 +68,8 @@ Elasticsearch
 
 Excel File (Ref. README for fields header requirements)
 
-   -x | --xl_filename           	Excel file name (required)							
+   -x | --xl_filename           	Excel file name (required)			
+   -a | --all_worksheets			Parse all worksheets (default: off)
 
 Help
 
@@ -78,10 +83,15 @@ USAGE
 if ($xl_filename ne "") { chomp($xl_filename); } else { print STDERR "\nExcel file name not provided!\n\n"; usage(); }
 	
 print "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " Parsing started...\n" if $verbose;
-print "\nParsing with $index :: $type :: $es_server_port ::  $xl_filename" if $verbose;
+print "\nParsing with Index[$index] :: Type[$type] :: ES[$es_server_port] :: Excel[$xl_filename]\n" if $verbose;
 	
 my $e = Elasticsearch->new( nodes => "$es_server_port" );
-my $parser   = Spreadsheet::ParseXLSX->new;
+
+my $parser;
+
+if (uc(substr $xl_filename, -3, 3) eq "XLS") { $parser = Spreadsheet::ParseExcel->new; }
+else { $parser = Spreadsheet::ParseXLSX->new; } 	
+
 my $workbook = $parser->parse($xl_filename);
 
 die $parser->error(), ".\n" if ( !defined $workbook );
@@ -103,10 +113,10 @@ for my $worksheet ( $workbook->worksheets() ) {
 			next unless $curr;
 			my $fld = $curr->value();		
 			print "\nProcessing field: $fld"  if $verbose;
+			if (substr $fld, -3, 1 eq "_")									# if field name has additional details 
+			{
 			$fields[$hdr] = substr $fld, 0, -3;
 			my $tmp_fldname=$fields[$hdr];
-			unless (substr $tmp_fldname, 1, 1 eq "_")									# if field name has additional details 
-			{
 			$map_analysis{$tmp_fldname} = substr $fld, -2, 1;						# _ A|N . => (-2) Analyzed..or..not 
 			$map_type{$tmp_fldname} = substr $fld, -1, 1;							# _ . S|D|I|B => (-1) Data type B=> double 
 			my $tmp01=$map_type{$tmp_fldname};
@@ -128,12 +138,14 @@ for my $worksheet ( $workbook->worksheets() ) {
 			}
 			else																	# else defaults
 			{
-			 $mapping{$tmp_fldname}{"type"} = "string"; 
-			 $mapping{$tmp_fldname}{"index"} = "not_analyzed"; 
+			 # print "Parsing $fld";
+			 $fields[$hdr] = $fld;
+			 $mapping{$fld}{"type"} = "string"; 
+			 $mapping{$fld}{"index"} = "not_analyzed"; 
 			}
 		} # Close Header
 		
-		print "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " ...$xl_filename field headers parsed."  if $verbose;
+		print "\n\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " ...[$xl_filename::$worksheet->{Name}] field headers parsed."  if $verbose;
 			
 		if(! $e->indices->exists(index => $index)) {
 			$result = $e->indices->create(index => $index);
@@ -183,12 +195,15 @@ for my $worksheet ( $workbook->worksheets() ) {
 			
 		} # Close All Rows
 		
+		last if !$parse_all_worksheets;
+		
 } # Close Worksheets
 
+print STDERR "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " Total records inserted: $id \n"; 		
+	
 
 	
 # that's it.. 	
-
 
 	
 # CG -- ones and for all -- an Excel parser for all XLS data to be imported into ES !
@@ -198,9 +213,3 @@ for my $worksheet ( $workbook->worksheets() ) {
 # Aug.13 -- xl2es.pl :>
 # more fun added on 6th feb... 7-8th.feb...
 
-# --
-
-#if ($opt{index} ne 0) {	chomp($opt{index}); } else { $opt{index} = "xl2es"; }
-#if ($opt{type} ne 0) {	chomp($opt{type}); } else { $opt{type} = "xldata"; }
-#if ($opt{es_server} ne 0) {	chomp($opt{es_server}); } else { $opt{es_server} = "localhost"; }
-#$opt{es_port} = ($opt{es_port} eq 0)? 9200 : $opt{es_port} ;

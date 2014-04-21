@@ -1,11 +1,9 @@
 Excel-2-Elasticsearch
 ====
 
-Small and quick perl script to inject records from MS Excel (.xlsx) directly into Elasticsearch. Some inbuilt automation is done to directly map field types and index action using field names. For e.g. Field with name like **Author_NS** implies ~ Field name => **Author**, **N** => Not_analyzed index and **S** => String data type.
+Small and quick perl script to inject records from MS Excel (.xlsx as well as .xls) directly into Elasticsearch. Useful for doing quick demos by importing existing Excel data and charting graphs using Kibana. 
 
-Useful for doing quick demos by importing existing Excel data and charting graphs using Kibana. 
-
-Next Steps [TODO]: On similar lines generate Kibana dashboards using Field name automation!
+Some inbuilt automation is done to directly map field types and index action using field names. For e.g. Field with name like **Author_NS** implies ~ Field name => **Author**, **N** => Not_analyzed index and **S** => String data type. In case you find it difficult to map fields, just go ahead and try your existing Excel files.
 
 
 ***WARNING:***
@@ -26,14 +24,23 @@ Next Steps [TODO]: On similar lines generate Kibana dashboards using Field name 
 	Excel File  
 
 	   -x | --xl_filename           		Excel file name (required)							
-
+	   -a | --all_worksheets				Parse all worksheets (default: off)
+   
 	Help
 
 	   -h | --help           				This help message
 	   -v | --verbose          				Verbose while parsing (defaut: off)
  
 
+**Installation / Dependencies**
+--
+* Perl v5.6 or later 
+* Requires [Perl client for Elasticsearch] (https://metacpan.org/pod/Search::Elasticsearch)
+* Perl packages for parsing Excel files
+	- for Excel XLSX [Parsing .xlsx] (http://search.cpan.org/~doy/Spreadsheet-ParseXLSX-0.05/lib/Spreadsheet/ParseXLSX.pm)
+	- for Excel 97 - 2003 [Parsing .xls] (http://search.cpan.org/~dougw/Spreadsheet-ParseExcel-0.65/lib/Spreadsheet/ParseExcel.pm)
 
+	
 **Formatting Excel Data**
 --
 
@@ -42,7 +49,7 @@ Next Steps [TODO]: On similar lines generate Kibana dashboards using Field name 
 * If not provided, default field mapping is Not_Analyzed and String (_NS)
 * Index analysis character could be **N** => Not Analyzed and **A** => Analyzed
 * Data type character could be **I** => Integer, **D** => Date, **S** => String, **B** => Double 
-* For Date fields choose custom cell format "dd-mmm-yyyy hh:mm:ss". In case you wish to use a different Date format in Excel, appropriate changes needs to be done in the perl code.
+* For Date fields, choose custom cell format "dd-mmm-yyyy hh:mm:ss". In case you wish to use a different Date format in Excel, appropriate changes needs to be done in the perl code.
 
 **License**
 --
@@ -58,5 +65,9 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details. <http://www.gnu.org/licenses>
 
+
+**Next Steps [TODO]**
+--
+On similar lines generate Kibana dashboards using Field name automation!
 
 
