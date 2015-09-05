@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# xl2es.pl - Version 1.1
+# xl2es.pl - Version 1.2
 # Small&Quick script to inject records from MS Excel into Elasticsearch
 # Copyright (C) 2014 Chetan Ganatra - Chetan.Ganatra~at~gmail.com
 #
@@ -14,17 +14,21 @@
 # GNU General Public License for more details. <http://www.gnu.org/licenses>
 #
 
+# Sept,5 2015 - Incorporated the official Elasticsearch Perl client -- Search::Elasticsearch
+# 				Changes to index creation and few validations. +Verbose data for index mappings.
+
 use strict;
 # use v5.10; 																			 
-no warnings 'experimental::smartmatch';												# use Spreadsheet::ParseExcel;
+#no warnings 'experimental::smartmatch';												# use Spreadsheet::ParseExcel;
 use Time::Piece;
 use Getopt::Long;
 use Scalar::Util qw(looks_like_number);												
 use feature qw{ switch };
+use Data::Dumper;
 
 use Spreadsheet::ParseXLSX;
 use Spreadsheet::ParseExcel;
-use Elasticsearch;																	# ElasticSearch vs Elasticsearch matters! 
+use Search::Elasticsearch;																	# ElasticSearch vs Elasticsearch matters! 
 	
 my $xl2es_version = "1.1";
 	
@@ -64,7 +68,7 @@ Elasticsearch
 
    -i | --index <index name>   		Index name (default: xl2es)
    -t | --type <data type>     		Type name (default: xldata)
-   -s | --es_server_port <host|IP:Port> (default: localhost:9200)
+   -s | --es_server_port <host|IP:Port> (default: localhost:9200)   
 
 Excel File (Ref. README for fields header requirements)
 
@@ -85,7 +89,7 @@ if ($xl_filename ne "") { chomp($xl_filename); } else { print STDERR "\nExcel fi
 print "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " Parsing started...\n" if $verbose;
 print "\nParsing with Index[$index] :: Type[$type] :: ES[$es_server_port] :: Excel[$xl_filename]\n" if $verbose;
 	
-my $e = Elasticsearch->new( nodes => "$es_server_port" );
+my $e = Search::Elasticsearch->new( nodes => "$es_server_port", cxn_pool => 'Sniff');
 
 my $parser;
 
@@ -113,12 +117,14 @@ for my $worksheet ( $workbook->worksheets() ) {
 			next unless $curr;
 			my $fld = $curr->value();		
 			print "\nProcessing field: $fld"  if $verbose;
-			if (substr $fld, -3, 1 eq "_")									# if field name has additional details 
-			{
+			my $tm = substr $fld, -3, 1;
+			if ($tm eq "_")									# if field name has additional details 
+			{		
 			$fields[$hdr] = substr $fld, 0, -3;
 			my $tmp_fldname=$fields[$hdr];
 			$map_analysis{$tmp_fldname} = substr $fld, -2, 1;						# _ A|N . => (-2) Analyzed..or..not 
 			$map_type{$tmp_fldname} = substr $fld, -1, 1;							# _ . S|D|I|B => (-1) Data type B=> double 
+			print "\nType: ", (substr $fld, -1, 1), " Analysis: ", (substr $fld, -2, 1) if $verbose;
 			my $tmp01=$map_type{$tmp_fldname};
 			given($tmp01) {
 				when("S") { $mapping{$tmp_fldname}{"type"} = "string"; }
@@ -152,7 +158,10 @@ for my $worksheet ( $workbook->worksheets() ) {
 			# $result = $e->indices->delete(index => $index);
 		}
 		
-		print "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " ...Index created/reused $index."  if $verbose;
+		print "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " ...Index created/reused $index.\n"  if $verbose;
+		
+		#print "@{[%mapping]}";
+		print Dumper( %mapping) if $verbose;
 		
 		$result = $e->indices->put_mapping(index => $index, type  => $type, body => {$type => { "properties" => {%mapping}}});
 		
@@ -204,6 +213,8 @@ print STDERR "\nXL2ES :> ", localtime->strftime('%m/%d/%Y %H:%M'), " Total recor
 
 	
 # that's it.. 	
+
+
 
 	
 # CG -- ones and for all -- an Excel parser for all XLS data to be imported into ES !
